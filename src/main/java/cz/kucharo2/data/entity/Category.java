@@ -6,7 +6,6 @@ import cz.kucharo2.data.enums.CategoryType;
 import org.hibernate.annotations.Proxy;
 
 import javax.persistence.*;
-import javax.persistence.Table;
 import java.util.Collection;
 
 /**
@@ -22,9 +21,11 @@ public class Category extends DtoEntity {
     public static final String CATEGORY_NAME = "category_name";
     public static final String CODE = "code";
     public static final String PARENT_ID = "parent_id";
+    public static final String PRIORITY = "priority";
 
     @Id
     @Column(name = CATEGORY_ID)
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Integer id;
 
     @Column(name = CODE)
@@ -34,11 +35,15 @@ public class Category extends DtoEntity {
     @Column(name = CATEGORY_NAME)
     private String name;
 
+    @Column(name = PRIORITY)
+    private Integer priority;
+
     @ManyToOne
     @JoinColumn(name = PARENT_ID)
     private Category parentCategory;
 
     @OneToMany(mappedBy = "parentCategory")
+    @OrderBy("priority ASC")
     @JsonIgnore
     private Collection<Category> childCategories;
 
@@ -83,6 +88,14 @@ public class Category extends DtoEntity {
         this.childCategories = childCategories;
     }
 
+    public Integer getPriority() {
+        return priority;
+    }
+
+    public void setOrder(Integer order) {
+        this.priority = order;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -108,14 +121,4 @@ public class Category extends DtoEntity {
         return result;
     }
 
-    @Override
-    public String toString() {
-        return "Category{" +
-                "id=" + id +
-                ", code='" + code + '\'' +
-                ", name='" + name + '\'' +
-                ", parentCategory=" + parentCategory +
-                ", childCategories=" + childCategories +
-                '}';
-    }
 }

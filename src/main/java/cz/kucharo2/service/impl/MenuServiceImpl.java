@@ -1,6 +1,5 @@
 package cz.kucharo2.service.impl;
 
-import cz.kucharo2.data.dao.BillDao;
 import cz.kucharo2.data.dao.CategoryDao;
 import cz.kucharo2.data.dao.ItemDao;
 import cz.kucharo2.data.entity.Category;
@@ -10,6 +9,7 @@ import cz.kucharo2.service.MenuService;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.transaction.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -17,57 +17,97 @@ import java.util.stream.Collectors;
  * Created by Roman on 12/3/2014.
  */
 @ApplicationScoped
+@Transactional(rollbackOn = Exception.class)
 public class MenuServiceImpl implements MenuService {
 
-	@Inject
-	private CategoryDao categoryDao;
+    @Inject
+    private CategoryDao categoryDao;
 
-	@Inject
-	private ItemDao itemDao;
+    @Inject
+    private ItemDao itemDao;
 
-	@Inject
-	private BillDao billDao;
+    @Override
+    public List<Category> getAllCategoriesByParentCategory(Category category) {
+        return getAllCategoriesByParentCategory(category.getCode());
+    }
 
-	@Override
-	public Map<CategoryType, List<Category>> getAllCategoriesByParentCategory(Category category) {
-		return getAllCategoriesByParentCategory(category.getCode());
-	}
+    @Override
+    public List<Category> getAllCategoriesByParentCategory(CategoryType categoryType) {
+        return (List<Category>) categoryDao.getCategoryByCode(categoryType).getChildCategories();
+    }
 
-	@Override
-	public Map<CategoryType, List<Category>> getAllCategoriesByParentCategory(CategoryType categoryType) {
-		Map map = new HashMap<CategoryType, List<Category>>();
-		map.put(categoryType, categoryDao.getCategoryByCode(categoryType).getChildCategories());
-		return map;
-	}
+    @Override
+    public Map<Category, List<Item>> getAllItemsByCategoryCode(CategoryType categoryType) {
+        Map<Category, List<Item>> map = new LinkedHashMap<>();
+        Collection<Category> categories = categoryDao.getCategoryByCode(categoryType).getChildCategories();
+        List<CategoryType> categoryTypes = new ArrayList<>();
 
-	@Override
-	public List<Item> getItemsByCategory(CategoryType code) {
-		return itemDao.getItemsByCategory(code);
-	}
+		for (Category category : categories) {
+            categoryTypes.add(category.getCode());
+            map.put(category, new ArrayList<>());
+        }
 
-	@Override
-	public List<Item> getItemsByCombinationToAndCategory(int itemId, CategoryType categoryType) {
-		Item itemWithCombinations = itemDao.getItemsWithCombinations(itemId);
+        List<Item> items = itemDao.getItemsByListCategories(categoryTypes);
+        for (Item item : items) {
+            if (map.containsKey(item.getCategory())){
+                List<Item> currentItems = map.get(item.getCategory());
+                currentItems.add(item);
+            }
+        }
 
-		Set<Item> combinations = new HashSet<>();
+        return map;
+    }
 
-		combinations.addAll(filterCombinationsByCategory(itemWithCombinations.getItemCombination(), categoryType));
-		combinations.addAll(filterCombinationsByCategory(itemWithCombinations.getItemCombinationTo(), categoryType));
+    @Override
+    public Map<String, List<Item>> getAllItemsByCategoryCodeKeyedByCategoryName (CategoryType categoryType){
+        Collection<Category> categories = categoryDao.getCategoryByCode(categoryType).getChildCategories();
+        List<CategoryType> categoryTypes = new ArrayList<>();
+        Map<String, List<Item>> map = new LinkedHashMap<>();
 
-		return new ArrayList<>(combinations);
-	}
+        for (Category category : categories) {
+            categoryTypes.add(category.getCode());
+            map.put(category.getName(), new ArrayList<>());
+        }
 
-	private List<Item> filterCombinationsByCategory(Set<Item> combinations, CategoryType categoryType) {
-		return combinations
-				.stream()
-				.filter(item -> categoryType == null || item.getCategory().getCode().equals(categoryType))
-				.collect(Collectors.toList());
+        List<Item> items = itemDao.getItemsByListCategories(categoryTypes);
+        for (Item item : items) {
+            if (map.containsKey(item.getCategory().getName())){
+                List<Item> currentItems = map.get(item.getCategory().getName());
+                currentItems.add(item);
+            }
+        }
 
-	}
+        return map;
+    }
 
-	@Override
-	public Item getItemById(int id) {
-		return itemDao.getById(id);
-	}
+    @Override
+    public List<Item> getItemsByCategory(CategoryType code) {
+        return itemDao.getItemsByCategory(code);
+    }
 
+
+    @Override
+    public List<Item> getItemsByCombinationToAndCategory ( int itemId, CategoryType categoryType){
+        Item itemWithCombinations = itemDao.getItemsWithCombinations(itemId);
+
+        Set<Item> combinations = new HashSet<>();
+
+        combinations.addAll(filterCombinationsByCategory(itemWithCombinations.getItemCombination(), categoryType));
+        combinations.addAll(filterCombinationsByCategory(itemWithCombinations.getItemCombinationTo(), categoryType));
+
+        return new ArrayList<>(combinations);
+    }
+
+    private List<Item> filterCombinationsByCategory(Set<Item> combinations, CategoryType categoryType) {
+        return combinations
+                .stream()
+                .filter(item -> categoryType == null || item.getCategory().getCode().equals(categoryType))
+                .collect(Collectors.toList());
+
+    }
+
+    @Override
+    public Item getItemById ( int id){
+        return itemDao.getById(id);
+    }
 }

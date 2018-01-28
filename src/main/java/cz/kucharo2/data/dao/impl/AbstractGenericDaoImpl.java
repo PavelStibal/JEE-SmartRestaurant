@@ -15,7 +15,7 @@ import java.util.Map;
  */
 public abstract class AbstractGenericDaoImpl<T extends DtoEntity> implements AbstractGenericDao<T> {
 
-    @PersistenceContext
+    @PersistenceContext(name = "primary")
     private EntityManager entityManager;
 
     private Class<T> clazz;
@@ -60,15 +60,15 @@ public abstract class AbstractGenericDaoImpl<T extends DtoEntity> implements Abs
     }
 
     @Override
-    public Long getAllCount() {
-        Query query = getEntityManager().createQuery("select count(*) from " + clazz.getAnnotation(Table.class).name());
+    public Long getAllCount(T dtoEntity) {
+        Query query = getEntityManager().createQuery("select count(e) from " + dtoEntity.getClass().getName() + " e" );
         return (Long) query.getSingleResult();
     }
 
     protected Long getCountByCondition(String whereCondition, Map<String, Object> sqlParams) {
         StringBuilder sb = new StringBuilder();
-        sb.append("select count(*) from " + clazz.getAnnotation(Table.class).name());
-        sb.append(" " + whereCondition);
+        sb.append("select count(e) from " + clazz.getAnnotation(Table.class).name()).append(" e WHERE ");
+        sb.append(whereCondition);
         Query query = getEntityManager().createQuery(sb.toString());
 
         for (String key : sqlParams.keySet()) {
@@ -79,11 +79,19 @@ public abstract class AbstractGenericDaoImpl<T extends DtoEntity> implements Abs
 
 
     protected List<T> getByWhereCondition(String whereCondition, Map<String, Object> sqlParams) {
-        return createGetWhereConditionQuery(whereCondition, sqlParams).getResultList();
+        try {
+            return createGetWhereConditionQuery(whereCondition, sqlParams).getResultList();
+        } catch (NoResultException e) {
+            return null;
+        }
     }
 
     protected T getByWhereConditionSingleResult(String whereCondition, Map<String, Object> sqlParams) {
-        return (T) createGetWhereConditionQuery(whereCondition, sqlParams).getSingleResult();
+        try {
+            return (T) createGetWhereConditionQuery(whereCondition, sqlParams).getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
     }
 
     protected Query createGetWhereConditionQuery(String whereCondition, Map<String, Object> sqlParams) {

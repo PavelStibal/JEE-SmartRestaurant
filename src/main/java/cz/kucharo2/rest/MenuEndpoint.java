@@ -1,9 +1,8 @@
 package cz.kucharo2.rest;
 
-import cz.kucharo2.data.dao.ItemDao;
-import cz.kucharo2.data.entity.Category;
 import cz.kucharo2.data.entity.Item;
 import cz.kucharo2.data.enums.CategoryType;
+import cz.kucharo2.filter.Secured;
 import cz.kucharo2.service.MenuService;
 
 import javax.inject.Inject;
@@ -18,26 +17,16 @@ import java.util.Map;
 /**
  * @Author Pavel Matyáš (matyapav@fel.cvut.cz)
  */
-
 @Path("/menu")
 public class MenuEndpoint {
 
     @Inject
     private MenuService menuService;
 
-    @Inject
-    private ItemDao itemDao;
-
     @GET
-    @Path("items")
+    @Path("{item_id}/sideDish")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<Item> getAllMenuItems() {
-        return itemDao.getAll();
-    }
-
-    @GET
-    @Path("item/{item_id}/sideDish")
-    @Produces(MediaType.APPLICATION_JSON)
+    @Secured
     public List<Item> getSideDishesForItem(@PathParam("item_id") Integer itemId) {
         return menuService.getItemsByCombinationToAndCategory(itemId, CategoryType.PRILOHA);
     }
@@ -45,7 +34,16 @@ public class MenuEndpoint {
     @GET
     @Path("dishes")
     @Produces(MediaType.APPLICATION_JSON)
-    public Map<CategoryType, List<Category>> getAllDishes() {
-        return menuService.getAllCategoriesByParentCategory(CategoryType.MAIN_FOOD);
+    @Secured
+    public Map<String, List<Item>> getAllDishes() {
+        return menuService.getAllItemsByCategoryCodeKeyedByCategoryName(CategoryType.MAIN_FOOD);
+    }
+
+    @GET
+    @Path("drinks")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Secured
+    public Map<String, List<Item>> getAllDrinks() {
+        return menuService.getAllItemsByCategoryCodeKeyedByCategoryName(CategoryType.DRINKS);
     }
 }

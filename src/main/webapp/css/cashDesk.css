@@ -1,0 +1,77 @@
+/*******************************************
+STYLES FOR CASH DESK PAGE
+ *******************************************/
+.cash-desk {
+    background-color: #ffffff;
+    width: 70%;
+    position: absolute;
+    top: 120px;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow-y: auto;
+    border-right: 2px solid black;
+}
+
+#cash-desk-actions-column {
+    width: 100px;
+}
+
+#cash-desk h1 {
+    padding: 10px;
+}
+
+.to-be-payed {
+    float: right;
+    padding: 10px;
+    position: absolute;
+    left: 70%;
+    width: 30%;
+    bottom: 0;
+    top: 120px;
+    display: flex;
+    flex-direction: column;
+    background-color: rgba(255, 255, 255, 0.9);
+}
+
+.cash-desk-compact {
+    width: 50%;
+    margin: auto;
+    border: 2px solid black;
+    padding: 20px;
+}
+
+#cash-desk-button {
+    position: absolute;
+    margin: auto;
+    left: 310px;
+    right: 310px;
+    text-align: center;
+    top: 60px;
+}
+
+#cash-desk-button button {
+    width: 300px;
+}
+
+#add-all-btn {
+    width: 100%;
+}
+#remove-all-btn {
+    width: 100%;
+}
+
+#unpaidUserSelect {
+    width: 200px;
+    background-color: #fff0f5;
+    font-weight: bold;
+}
+
+#unpaidUserDiv {
+    border: 1px solid gray;
+    border-radius: 0px 10px 10px 0px;
+    padding: 4px 15px 6px 15px;
+    position: absolute;
+    left: -15px;
+    background-color: #6495ed;
+}

@@ -17,8 +17,10 @@
 		<jcloverslf4j.version>1.7.6</jcloverslf4j.version>
 
 		<!--Tests-->
-		<junit.version>4.8.2</junit.version>
+		<junit.version>4.10</junit.version>
 		<mockito.version>1.8.5</mockito.version>
+        <arquillian.version>1.1.5.Final</arquillian.version>
+		<wildfly.version>8.2.0.Final</wildfly.version>
 
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<javaee7.web.spec.version>1.0.3.Final</javaee7.web.spec.version>
@@ -26,20 +28,24 @@
 		<maven.compiler.source>1.8</maven.compiler.source>
 	</properties>
 
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.jboss.spec</groupId>
+				<artifactId>jboss-javaee-web-7.0</artifactId>
+				<version>${javaee7.web.spec.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
 	<dependencies>
 		<dependency>
 			<groupId>javax</groupId>
 			<artifactId>javaee-api</artifactId>
 			<version>7.0</version>
 			<scope>provided</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.jboss.spec</groupId>
-			<artifactId>jboss-javaee-web-7.0</artifactId>
-			<version>${javaee7.web.spec.version}</version>
-			<scope>provided</scope>
-			<type>pom</type>
 		</dependency>
 
 		<!--Database connection dependencies-->
@@ -53,6 +59,12 @@
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-core</artifactId>
 			<version>${hibernate-core.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>antlr</groupId>
+					<artifactId>antlr</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<dependency>
@@ -60,6 +72,13 @@
 			<artifactId>hibernate-validator</artifactId>
 			<version>5.2.4.Final</version>
 			<scope>provided</scope>
+		</dependency>
+
+		<!-- ActiveMQ - persistent message queue-->
+		<dependency>
+			<groupId>org.apache.activemq</groupId>
+			<artifactId>activemq-all</artifactId>
+			<version>5.14.1</version>
 		</dependency>
 
 		<!-- for JPA, use hibernate-entitymanager instead of hibernate-core -->
@@ -81,6 +100,29 @@
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>${junit.version}</version>
+            <scope>test</scope>
+		</dependency>
+
+        <dependency>
+            <groupId>org.jboss.arquillian.core</groupId>
+            <artifactId>arquillian-core-api</artifactId>
+            <version>${arquillian.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.arquillian.junit</groupId>
+            <artifactId>arquillian-junit-container</artifactId>
+            <version>${arquillian.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+
+		<dependency>
+			<groupId>org.jboss.arquillian.extension</groupId>
+			<artifactId>arquillian-transaction-jta</artifactId>
+			<version>1.0.2.Final</version>
+			<scope>test</scope>
 		</dependency>
 
 		<dependency>
@@ -97,11 +139,19 @@
 			<scope>provided</scope>
 		</dependency>
 
-		<!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations -->
+        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-annotations -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-annotations</artifactId>
 			<version>2.9.2</version>
+		</dependency>
+
+		<!-- WildFly clustering API, namely @org.wildfly.clustering.annotation.Immutable annotation -->
+		<dependency>
+			<groupId>org.wildfly</groupId>
+			<artifactId>wildfly-clustering-web-api</artifactId>
+			<version>${wildfly.version}</version>
+			<scope>provided</scope>
 		</dependency>
 
 	</dependencies>
@@ -124,6 +174,24 @@
 				<configuration>
 					<failOnMissingWebXml>false</failOnMissingWebXml>
 				</configuration>
+				<executions>
+					<!-- Add the default execution as workaround for IDE to pick up the default configuration. -->
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>war</goal>
+						</goals>
+						<configuration>
+							<warSourceDirectory>${basedir}/src/main/webapp</warSourceDirectory>
+							<archive>
+								<manifestEntries>
+									<!-- WildFly clustering API if you want to experiment! -->
+									<Dependencies>org.wildfly.clustering.api</Dependencies>
+								</manifestEntries>
+							</archive>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.wildfly.plugins</groupId>
@@ -161,4 +229,87 @@
 			</snapshots>
 		</pluginRepository>
 	</pluginRepositories>
+	<profiles>
+		<profile>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+
+			<!-- We add the JBoss repository as we need the JBoss AS connectors for Arquillian -->
+			<repositories>
+				<!-- The JBoss Community public repository is a composite repository of several major repositories -->
+				<!-- see http://community.jboss.org/wiki/MavenGettingStarted-Users -->
+				<repository>
+					<id>jboss-public-repository</id>
+					<name>JBoss Repository</name>
+					<url>http://repository.jboss.org/nexus/content/groups/public</url>
+					<!-- These optional flags are designed to speed up your builds by reducing remote server calls -->
+					<releases>
+					</releases>
+					<snapshots>
+						<enabled>false</enabled>
+					</snapshots>
+				</repository>
+			</repositories>
+
+			<pluginRepositories>
+				<pluginRepository>
+					<id>jboss-public-repository</id>
+					<name>JBoss Repository</name>
+					<url>http://repository.jboss.org/nexus/content/groups/public</url>
+					<releases>
+					</releases>
+					<snapshots>
+						<enabled>false</enabled>
+					</snapshots>
+				</pluginRepository>
+			</pluginRepositories>
+
+			<!-- An optional Arquillian testing profile that executes tests in your JBoss AS instance -->
+			<!-- This profile will start a new JBoss AS instance, and execute the test, shutting it down when done -->
+			<!-- Run with: mvn clean test -Parq-jbossas-managed -->
+			<id>arq-jbossas-managed</id>
+			<dependencies>
+				<dependency>
+					<groupId>org.wildfly</groupId>
+					<artifactId>wildfly-arquillian-container-managed</artifactId>
+					<version>${wildfly.version}</version>
+					<scope>test</scope>
+					<exclusions>
+						<exclusion>
+							<groupId>sun.jdk</groupId>
+							<artifactId>jconsole</artifactId>
+						</exclusion>
+					</exclusions>
+				</dependency>
+				<dependency>
+					<groupId>org.jboss.arquillian.protocol</groupId>
+					<artifactId>arquillian-protocol-servlet</artifactId>
+					<version>${arquillian.version}</version>
+					<scope>test</scope>
+				</dependency>
+			</dependencies>
+		</profile>
+
+		<profile>
+			<!-- When built in OpenShift the 'openshift' profile will be used when invoking mvn -->
+			<!-- Use this profile for any OpenShift specific customization your app will need -->
+			<!-- By default that is to put the resulting archive into the 'deployments' folder -->
+			<!-- http://maven.apache.org/guides/mini/guide-building-for-different-environments.html -->
+			<id>openshift</id>
+			<build>
+				<plugins>
+					<plugin>
+						<artifactId>maven-war-plugin</artifactId>
+						<version>2.3</version>
+						<configuration>
+							<outputDirectory>deployments</outputDirectory>
+							<warName>ROOT</warName>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
 </project>

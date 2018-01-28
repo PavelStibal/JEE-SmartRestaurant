@@ -20,9 +20,12 @@ public class Account extends DtoEntity {
     public static final String FIRST_NAME = "first_name";
     public static final String LAST_NAME = "last_name";
     public static final String ROLE_ID = "role_id";
+    public static final String EMAIL = "email";
+    public static final String PHONE = "phone";
 
     @Id
     @Column(name = ACCOUNT_ID)
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Integer id;
 
     @Column(name = USERNAME)
@@ -40,6 +43,12 @@ public class Account extends DtoEntity {
     @Column(name = ROLE_ID)
     @Enumerated(EnumType.STRING)
     private AccountRole accountRole;
+
+    @Column(name = EMAIL)
+    private String email;
+
+    @Column(name = PHONE)
+    private String phone;
 
     @Override
     public Integer getId() {
@@ -90,6 +99,26 @@ public class Account extends DtoEntity {
         this.accountRole = accountRole;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public boolean isAnnonymousAccount() {
+        return accountRole == AccountRole.ANONYMOUS_CUSTOMER;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -124,6 +153,8 @@ public class Account extends DtoEntity {
                 ", password='" + password + '\'' +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
+                ", email='" + email + '\'' +
+                ", phone='" + phone + '\'' +
                 ", accountRole=" + accountRole +
                 '}';
     }

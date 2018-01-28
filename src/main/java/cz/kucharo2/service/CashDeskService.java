@@ -1,7 +1,8 @@
 package cz.kucharo2.service;
 
-import cz.kucharo2.data.entity.Bill;
-import cz.kucharo2.data.entity.BillItem;
+import cz.kucharo2.data.entity.Account;
+import cz.kucharo2.data.entity.Order;
+import cz.kucharo2.data.entity.OrderItem;
 import cz.kucharo2.data.entity.RestaurantTable;
 
 import java.util.List;
@@ -10,49 +11,49 @@ import java.util.List;
  * Created by Roman on 12/2/2014.
  */
 public interface CashDeskService {
-	/**
-	 * Returns bill by specific id
-	 *
-	 * @param id bill id
-	 * @return bill
-	 */
-	Bill getBillById(int id);
 
 	/**
-	 * Create bill for specific table
+	 * Create order for specific table
 	 *
 	 * @param table table
-	 * @return id of created bill
+	 * @return id of created order
 	 */
-	Bill createBillOnTable(RestaurantTable table);
+	Order createOrderOnTable(RestaurantTable table);
 
 	/**
-	 * Create bill items of food
+	 * Create order item of food
 	 *
-	 * @param billItemFoods list bill items to be created
-	 *
+	 * @param orderItemFoods order item to be created
 	 */
-	void createBillItem(List<BillItem> billItemFoods);
+	void createOrderItem(OrderItem orderItemFoods);
 
 	/**
-	 * Create bill item of food
+	 * Returns unpaid order items of food for specific order
 	 *
-	 * @param billItemFoods bill item to be created
+	 * @param orderId order id
+	 * @return unpaid order items
 	 */
-	void createBillItem(BillItem billItemFoods);
+	List<OrderItem> getUnpaidOrderItemFoodByOrder(Integer orderId);
 
 	/**
-	 * Returns unpaid bill items of food for specific bill
+	 * Returns unpaid finished order items for specific table and specific user
 	 *
-	 * @param bill bill
-	 * @return unpaid bill items
+	 * @param tableId table id
+	 * @return unpaid finished orders on given table
 	 */
-	List<BillItem> getUnpaidBillItemFoodByBill(Bill bill);
+	List<OrderItem> getUnpaidFinishedOrderItemsOnTable(Integer tableId, Integer userId);
 
 	/**
-	 * Pay bill items
-	 * @param billItems bill items of foods to be paid
+	 * Returns users which have unpaid order items on specific table
+	 * @param tableId table id
+	 * @return users having unpaid order items on table
 	 */
-	void pay(List<BillItem> billItems);
+	List<Account> getUsersHavingUnpaidFinishedOrdersOnTable(Integer tableId);
+
+	/**
+	 * Pay order items
+	 * @param orderItemsIds order item ids of dishes to be paid
+	 */
+	void pay(List<Integer> orderItemsIds);
 
 }

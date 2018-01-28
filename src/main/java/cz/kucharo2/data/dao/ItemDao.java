@@ -20,6 +20,14 @@ public interface ItemDao extends AbstractGenericDao<Item> {
 	List<Item> getItemsByCategory(CategoryType categoryType);
 
 	/**
+	 * Return list of dishes by specific categories
+	 *
+	 * @param categories list of category type
+	 * @return list of dishes by categories
+	 */
+	List<Item> getItemsByListCategories(List<CategoryType> categories);
+
+	/**
 	 * Return count of dishes by specific category
 	 *
 	 * @param categoryType category type
